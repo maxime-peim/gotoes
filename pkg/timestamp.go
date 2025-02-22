@@ -173,7 +173,7 @@ func getUploadForm(fileID string, params *AddTimestampsToGPXParams) (*url.Values
 	q.Add("MoK", "K")
 	q.Add("desiredSpeed", strconv.Itoa(int(params.DesiredSpeed)))
 	q.Add("spoofStartTime", params.StartTime)
-	q.Add("considerElevation", "bikespeed")
+	q.Add("considerElevation", "")
 	q.Add("reverseRoute", "")
 	reqGetUpload.URL.RawQuery = q.Encode()
 
@@ -193,16 +193,20 @@ func getUploadForm(fileID string, params *AddTimestampsToGPXParams) (*url.Values
 	doc.Find("form[name=combineParameters] input").Each(func(i int, s *goquery.Selection) {
 		name, _ := s.Attr("name")
 		value, _ := s.Attr("value")
-		hidden, _ := s.Attr("type")
-		if hidden != "hidden" {
-			return
+		type_, _ := s.Attr("type")
+		switch type_ {
+		case "checkbox":
+			if s.Is(":checked") {
+				values.Add(name, value)
+			}
+		case "radio":
+			if s.Is(":checked") {
+				values.Add(name, value)
+			}
+		default:
+			values.Add(name, value)
 		}
-		values.Add(name, value)
 	})
-
-	// adjust the values to download the GPX file.
-	values.Add("outputFormat", "GPX")
-	values.Add("timeZoneAdjustmentFactor", "3600")
 	values.Add("ActivitySport", "Biking")
 
 	return values, nil
